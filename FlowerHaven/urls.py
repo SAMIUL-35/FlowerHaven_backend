@@ -10,6 +10,11 @@ from allauth.account.views import confirm_email
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+  
+  path('api/cart/', include('cart.urls')),  
+    path('api/category/', include('category.urls')),
+    path('api/flower/', include('flower.urls')),
+    path('api/order/', include('order.urls')),
     path("api-auth/", include("rest_framework.urls")),
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/account-confirm-email/<str:key>/", confirm_email, name="confirm_email"),

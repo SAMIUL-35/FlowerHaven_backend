@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-2fbi2x-cisq#-@4@uxn51-j1mwr#6@r3+wppa4-1xf%@1mj9z2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']  # Update this for production
+ALLOWED_HOSTS = ["*"] 
 
 # Application definition
 
@@ -52,6 +52,10 @@ INSTALLED_APPS = [
     
     # Local apps
     "accounts.apps.AccountsConfig",
+    "cart.apps.CartConfig",
+    "order.apps.OrderConfig",
+    "flower.apps.FlowerConfig",
+    "category.apps.CategoryConfig",
 ]
 
 # Django REST Framework configuration
@@ -140,9 +144,18 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-# STATICFILES_DIRS = [BASE_DIR / "static"]
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = env("EMAIL")
+# EMAIL_HOST_PASSWORD = env("EMAIL_PASSWORD")
 
 # Debug toolbar (optional for debugging)
