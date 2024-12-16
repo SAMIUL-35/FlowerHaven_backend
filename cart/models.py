@@ -1,21 +1,22 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from flower.models import Flower
+from datetime import datetime
 
-User = get_user_model()  # Dynamically get the user model to ensure flexibility
+User = get_user_model()
 
 class Cart(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cart_items")
     flower = models.ForeignKey(Flower, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'flower'], name='unique_user_flower')
-        ]
-
-    def total_price(self):
-        return self.quantity * self.flower.price
+    purchased = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  # auto_now_add sets the value on creation
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username}'s cart - {self.flower.name} x {self.quantity}"
+        return f"{self.user.username} - {self.flower} ({self.quantity})"
+    
+    def get_totals(self):
+        """Calculate the total price for this cart item."""
+        total = self.flower.price * self.quantity
+        return round(total, 2)

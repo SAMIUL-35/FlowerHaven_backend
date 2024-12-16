@@ -1,0 +1,21 @@
+# Python & Django specific ignores
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.log
+
+# Virtual Environment
+*.env
+__env__
+*.venv
+.env.local
+node_modules/
+dist/
+
+# Django specific
+*.sqlite3
+db.sqlite3
+*.db
+*.db-journal
+*.log

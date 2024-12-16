@@ -4,25 +4,17 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# must add this in settings.py
-
-# REST_AUTH_REGISTER_SERIALIZERS = {
-#     'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
-# }
-
-
 class CustomRegisterSerializer(RegisterSerializer):
     USER_TYPE_CHOICES = (
         ('admin', 'Admin'),
         ('seller', 'Seller'),  
         ('buyer', 'Buyer'),
     )
-    user_type = serializers.ChoiceField(choices=USER_TYPE_CHOICES)
+    user_type = serializers.ChoiceField(choices=USER_TYPE_CHOICES, required=False, default='buyer')
 
     def get_cleaned_data(self):
         data = super().get_cleaned_data()
-        data['user_type'] = self.validated_data.get('user_type', '')
-        print('heloooooooo --- > ',data['user_type'])
+        data['user_type'] = self.validated_data.get('user_type', 'buyer')
         return data
 
     def save(self, request):
@@ -30,3 +22,8 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.user_type = self.cleaned_data.get('user_type')
         user.save()
         return user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']

@@ -1,26 +1,33 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth.views import (
-    PasswordResetView,
-    PasswordResetDoneView,
-    PasswordResetConfirmView,
-    PasswordResetCompleteView,
-)
+from django.conf import settings
+from django.conf.urls.static import static
+from accounts.views import UserProfileAPIView
 from allauth.account.views import confirm_email
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-  
-  path('api/cart/', include('cart.urls')),  
+
+    # API endpoints
+    path('api/cart/', include('cart.urls')),
     path('api/category/', include('category.urls')),
     path('api/flower/', include('flower.urls')),
     path('api/order/', include('order.urls')),
+
+    # REST framework and authentication
     path("api-auth/", include("rest_framework.urls")),
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/account-confirm-email/<str:key>/", confirm_email, name="confirm_email"),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
-    path("api/auth/password/reset/", PasswordResetView.as_view(), name="password_reset"),
-    path("api/auth/password/reset/done/", PasswordResetDoneView.as_view(), name="password_reset_done"),
-    path("api/auth/password/reset/confirm/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("api/auth/password/reset/complete/", PasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path("api/auth/", include("django.contrib.auth.urls")),
+
+    # User profile endpoint
+    path('api/user-profile/', UserProfileAPIView.as_view(), name='user-profile'),
+
+    # Password reset views
+    path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
 ]
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
