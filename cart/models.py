@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from flower.models import Flower
-from datetime import datetime
 
 User = get_user_model()
 
@@ -10,7 +9,7 @@ class Cart(models.Model):
     flower = models.ForeignKey(Flower, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     purchased = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)  # auto_now_add sets the value on creation
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -18,5 +17,4 @@ class Cart(models.Model):
     
     def get_totals(self):
         """Calculate the total price for this cart item."""
-        total = self.flower.price * self.quantity
-        return round(total, 2)
+        return round(self.flower.price * self.quantity, 2)

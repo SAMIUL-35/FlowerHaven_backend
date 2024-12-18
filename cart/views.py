@@ -6,81 +6,83 @@ from django.db.models import F
 from .models import Cart, Flower
 from .serializers import CartSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
 import logging
+from rest_framework.decorators import action
 
 logger = logging.getLogger(__name__)
 
 class CartViewSet(viewsets.ModelViewSet):
     queryset = Cart.objects.select_related('flower').all()
     serializer_class = CartSerializer
-    permission_classes = [IsAuthenticated]  
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(user=self.request.user, purchased=False)
 
     @transaction.atomic
     def perform_create(self, serializer):
-        flower = serializer.validated_data['flower']
+        flower = serializer.validated_data.get('flower')
+        quantity = serializer.validated_data.get('quantity', 1)
 
-        if flower.stock < 1:
-            raise ValidationError({"detail": "This flower is out of stock."})
+        # Refresh stock and log its value
+        flower.refresh_from_db()
+        logger.debug(f"Stock for flower {flower.id}: {flower.stock}")
+        logger.debug(f"Requested quantity: {quantity}")
 
-        existing_cart_item = Cart.objects.filter(user=self.request.user, flower=flower).first()
-
-        try:
-            if existing_cart_item:
-                existing_cart_item.quantity += 1
-                existing_cart_item.save()
-            else:
-                serializer.save(user=self.request.user)
-
-            flower.stock = F('stock') - 1
-            flower.save()
-
-        except Exception as e:
-            raise ValidationError({"detail": f"Failed to add item to cart: {str(e)}"})
-
-    @transaction.atomic
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        new_quantity = int(request.data.get("quantity", instance.quantity))
-
-        if new_quantity <= 0:
-            flower = instance.flower
-            flower.stock += instance.quantity
-            flower.save()
-            instance.delete()
-            return Response({"detail": "Cart item removed."}, status=204)
-
-        flower = instance.flower
-        quantity_change = new_quantity - instance.quantity
-
-        if quantity_change > 0 and flower.stock < quantity_change:
+        # Check stock availability
+        if flower.stock < quantity:
+            logger.error(f"Not enough stock available for flower {flower.id}")
             raise ValidationError({"detail": "Not enough stock available."})
 
-        flower.stock -= quantity_change
+        # Check for existing cart item (same product, purchased=False)
+        existing_cart_item = Cart.objects.filter(user=self.request.user, flower=flower, purchased=False).first()
+
+        if existing_cart_item:
+            # Add quantity to the existing cart item
+            new_quantity = existing_cart_item.quantity + quantity
+            logger.debug(f"New quantity for existing cart item: {new_quantity}")
+
+            # If the new quantity exceeds available stock, raise an error
+            if quantity > flower.stock:
+                logger.error(f"Not enough stock available for requested quantity. Available: {flower.stock}, Requested: {new_quantity}")
+                raise ValidationError({"detail": "Not enough stock available for the requested quantity."})
+
+            # Update the existing cart item with the new quantity
+            existing_cart_item.quantity = new_quantity
+            existing_cart_item.save()
+
+        else:
+            # No existing cart item, so create a new one
+            serializer.save(user=self.request.user)
+
+        # Deduct stock after adding to the cart
+        flower.stock = F('stock') - quantity
         flower.save()
+        flower.refresh_from_db()
+        logger.debug(f"Updated stock for flower {flower.id}: {flower.stock}")
 
-        instance.quantity = new_quantity
-        instance.save()
-
-        total_price = instance.flower.price * instance.quantity
-
-        return Response({
-            "item": CartSerializer(instance).data,
-            "total_price": total_price
-        })
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        flower = instance.flower
+        flower.stock += instance.quantity  # Increase stock when deleting the cart item
+        flower.save()
+        logger.debug(f"Stock restored for flower {flower.id}: {flower.stock}")
+        super().perform_destroy(instance)
 
     @action(detail=False, methods=["get"], url_path="cart-total")
     def cart_total(self, request):
-        logger.info("Cart total action called")
+        logger.info(f"Cart total requested by user {request.user.id}")
 
+        # Fetch cart items for the user that are not purchased
         cart_items = self.get_queryset()
         grand_total = sum(item.flower.price * item.quantity for item in cart_items)
 
+        logger.debug(f"User {request.user.id} cart total: {grand_total}")
+
+        # Serialize the cart items data
         cart_item_data = CartSerializer(cart_items, many=True).data
 
+        # Return response with cart items and grand total
         return Response({
             "cart_items": cart_item_data,
             "grand_total": grand_total

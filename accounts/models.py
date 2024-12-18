@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
         ('seller', 'Seller'),  
         ('buyer', 'Buyer'),)
     
-    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES)
+    user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES,default='buyer')
    
    
 @receiver(reset_password_token_created)

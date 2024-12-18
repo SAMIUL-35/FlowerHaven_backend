@@ -10,7 +10,11 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 AUTH_USER_MODEL = "accounts.CustomUser"
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',  # React default port = 3000
+    'http://localhost:8000',  # Django default port = 8000
+)
 
 SECRET_KEY = env("SECRET_KEY", default='django-insecure-2fbi2x-cisq#-@4@uxn51-j1mwr#6@r3+wppa4-1xf%@1mj9z2')
 DEBUG = env("DEBUG", default=True)
@@ -122,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
+CORS_ALLOW_ALL_ORIGINS = True 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True

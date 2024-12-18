@@ -2,12 +2,12 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db import transaction
-from .models import Order
+from .models import Order, Cart
 from .serializers import OrderSerializer
-from cart.models import Cart
+from sslcommerz_lib import SSLCOMMERZ
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
-from sslcommerz_lib import SSLCOMMERZ
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -15,37 +15,46 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        return self.queryset.filter(user=self.request.user, ordered=True)
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
+        # Fetch all the cart items that are not yet purchased
         cart_items = Cart.objects.filter(user=request.user, purchased=False)
 
-        if not cart_items:
+        # If the cart is empty, raise an error
+        if not cart_items.exists():
             raise ValidationError({"detail": "Your cart is empty."})
 
+        # Calculate total price from all cart items
         total_price = sum(item.get_totals() for item in cart_items)
 
+        # Create the Order object
         order = Order.objects.create(
             user=request.user,
             total_price=total_price
         )
 
-        order.cart_items.set(cart_items)
+        # Link the cart items with the order
+        order.cart_items.set(cart_items)  # Set cart items to order
+        order.save()  # Save the order after associating the cart items
 
+        # Payment gateway settings
         settings = {
-            'store_id': 'flowe675ea7ca09c98', 
+            'store_id': 'flowe675ea7ca09c98',
             'store_pass': 'flowe675ea7ca09c98@ssl',
             'issandbox': True
         }
 
         sslcz = SSLCOMMERZ(settings)
+
+        # Data to send to the payment gateway
         post_body = {
             'total_amount': total_price,
             'currency': "BDT",
             'tran_id': str(order.id),
-            'success_url': "http://localhost:5173/order",
-            'fail_url': "http://localhost:5173/cart",
+            'success_url': "http://localhost:5173/",
+            'fail_url': "http://localhost:5173/cart/",
             'cancel_url': "http://localhost:5173/cart",
             'emi_option': 0,
             'cus_name': request.user.get_full_name(),
@@ -63,24 +72,39 @@ class OrderViewSet(viewsets.ModelViewSet):
         }
 
         try:
+            # Create a session with the payment gateway
             response = sslcz.createSession(post_body)
             print(response)
 
             if response['status'] == 'SUCCESS':
+                # Set paymentId and orderId after successful payment session creation
+                order.paymentId = response.get('payment_id')  # Payment ID from the response
+                order.orderId = response.get('tran_id')      # Transaction ID from SSLCOMMERZ
+                order.save()  # Save the order with the updated paymentId and orderId
+
+                
+                Cart.objects.filter(user=request.user, purchased=False).update(purchased=True)
+                # Cart.objects.filter(user=request.user, purchased=True).delete()
+                Order.objects.filter(user=request.user,ordered=False).update(ordered=True)
+
+                # Return the payment gateway URL to redirect the user
                 return Response({
                     'redirect_url': response['GatewayPageURL']
                 }, status=200)
             else:
                 raise ValidationError({"detail": "Payment session creation failed."})
-        
+
         except Exception as e:
+            # Handle any errors that occurred during the payment session creation
             raise ValidationError({"detail": f"Payment gateway error: {str(e)}"})
 
     @action(detail=False, methods=["get"], url_path="order-total")
     def order_total(self, request):
+        # Calculate the grand total of all orders for the user
         orders = self.get_queryset()
         grand_total = sum(order.total_price for order in orders)
 
+        # Return the total of all orders along with the serialized order data
         return Response({
             "orders": OrderSerializer(orders, many=True).data,
             "grand_total": grand_total
