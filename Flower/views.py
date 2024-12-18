@@ -3,7 +3,7 @@ from .models import Flower
 from .serializers import FlowerSerializer
 
 class FlowerPagination(pagination.PageNumberPagination):
-    page_size = 2 
+    page_size = 12
     page_size_query_param = 'page_size'
     max_page_size = 100
 
