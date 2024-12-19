@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 AUTH_USER_MODEL = "accounts.CustomUser"
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000',  # React default port = 3000
+    'http://localhost:5173',  # React default port = 3000
     'http://localhost:8000',  # Django default port = 8000
 )
 
@@ -103,9 +103,7 @@ EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
-# ssl commerce payment gateway
-SSLCOMMERZ_STORE_ID = "flowe675ea7ca09c98"
-SSLCOMMERZ_STORE_PASS = "flowe675ea7ca09c98@ssl"
+
 
 
 SITE_ID = 1
