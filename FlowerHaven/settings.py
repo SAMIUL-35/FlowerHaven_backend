@@ -74,7 +74,8 @@ PASSWORD_RESET_TIMEOUT = 3600
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # optional, or 'mandatory' if you prefer
 
 CSRF_COOKIE_SECURE = False 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173",'http://127.0.0.1',]
+
 
 TEMPLATES = [
     {
