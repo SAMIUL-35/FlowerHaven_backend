@@ -22,6 +22,7 @@ djangorestframework-simplejwt
 djlint
 EditorConfig
 filelock
+gunicorn
 html-tag-names
 html-void-elements
 idna
@@ -29,6 +30,7 @@ jsbeautifier
 json5
 MouseInfo
 mysql-connector-python
+packaging
 pathspec
 phonenumbers
 pillow
@@ -54,3 +56,4 @@ typing_extensions
 tzdata
 urllib3
 virtualenv
+whitenoise
