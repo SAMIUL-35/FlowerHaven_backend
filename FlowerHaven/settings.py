@@ -10,17 +10,23 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 AUTH_USER_MODEL = "accounts.CustomUser"
-# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:5173',  
-    'http://localhost:8000',  # Django default port = 8000
+    'http://localhost:8000',
+    'https://flowerheaven35.netlify.app/',
 )
-
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1',
+    'https://flowerheaven.onrender.com', 
+    'https://flowerheaven35.netlify.app/',
+]
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
-LOGIN_URL = "http://localhost:5173/signin"
+LOGIN_URL = "https://flowerheaven35.netlify.app/signin"
 
 INSTALLED_APPS = [
     'django.contrib.admin',
