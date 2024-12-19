@@ -12,12 +12,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 AUTH_USER_MODEL = "accounts.CustomUser"
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_WHITELIST = (
-    'http://localhost:5173',  # React default port = 3000
-    'http://localhost:8000',  # Django default port = 8000
+    'http://localhost:5173',  
+    'http://localhost:8000',  
 )
 
-SECRET_KEY = env("SECRET_KEY", default='django-insecure-2fbi2x-cisq#-@4@uxn51-j1mwr#6@r3+wppa4-1xf%@1mj9z2')
-DEBUG = env("DEBUG", default=True)
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = ["*"]
 LOGIN_URL = "http://localhost:5173/signin"
@@ -39,10 +39,10 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "dj_rest_auth.registration",
     "accounts.apps.AccountsConfig",
-    "cart.apps.CartConfig",
-    "order.apps.OrderConfig",
-    "flower.apps.FlowerConfig",
-    "category.apps.CategoryConfig",
+    "cart",
+    "order",
+    "flower",
+    "category",
     'django_rest_passwordreset',
 ]
 
